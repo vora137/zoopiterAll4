@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -191,6 +192,7 @@ public class PetInfoController {
   }
 
   // 수정
+  @SneakyThrows
   @PostMapping("/{id}/edit")
   public String update(
       @PathVariable("id") Long petNum,
@@ -207,6 +209,17 @@ public class PetInfoController {
     PetInfo petInfo = new PetInfo();
     petInfo.setPetNum(petNum);
 
+    // 파일첨부
+    List<UploadFile> imageFiles = uploadFileSVC.convert(petUpdateForm.getImageFiles(),AttachFileType.F0103);
+
+    if (!imageFiles.isEmpty()) {
+      if (imageFiles.get(0).getFileName() != null) {
+        petInfo.setPetImg(imageFiles.get(0).getFileName().getBytes()); // 새로운 사진 파일 설정
+      }
+    } else if (!petUpdateForm.getImageFiles().isEmpty()) {
+      // 기존 사진 파일이 있을 경우에만 기존 파일 설정
+      petInfo.setPetImg(petUpdateForm.getImageFiles().get(0).getBytes());
+    }
     petInfo.setPetImg(petUpdateForm.getPetImg());
     petInfo.setPetType(petUpdateForm.getPetType());
     petInfo.setPetBirth(petUpdateForm.getPetBirth());
@@ -216,16 +229,17 @@ public class PetInfoController {
     petInfo.setPetDate(petUpdateForm.getPetDate());
     petInfo.setPetVac(petUpdateForm.getPetVac());
     petInfo.setPetInfo(petUpdateForm.getPetInfo());
-    // 파일첨부
-    List<UploadFile> imageFiles = uploadFileSVC.convert(petUpdateForm.getImageFiles(),AttachFileType.F0103);
 
-    if(petUpdateForm.getImageFiles().size() == 0 ){
-      petInfoSVC.updateInfo(petNum,petInfo);
+    if (!imageFiles.isEmpty()) {
+      // 새로운 사진 파일이 있을 경우, 기존 사진 파일 삭제
+      if (petInfo.getPetImg() != null && petInfo.getPetImg().length > 0) {
+        uploadFileSVC.deleteFile(AttachFileType.F0103, String.valueOf(petInfo.getPetImg()));
+      }
+      petInfo.setPetImg(imageFiles.get(0).getBytes());
+      petInfoSVC.updateInfo(petNum, petInfo, imageFiles);
     } else {
-      petInfoSVC.updateInfo(petNum,petInfo,imageFiles);
+      petInfoSVC.updateInfo(petNum, petInfo);
     }
-
-//    String updatedPetInfo = String.valueOf(petInfoSVC.updateInfo(petNum, petInfo));
     redirectAttributes.addAttribute("id",petNum);
     return "redirect:/mypage";
   }

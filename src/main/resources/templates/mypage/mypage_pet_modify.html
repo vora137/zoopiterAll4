@@ -73,7 +73,7 @@
     </div>
     <!-- 메인컨텐츠 -->
     <div class="mypage_content">
-      <form action="" method="post" th:object="${petUpdateForm}">
+      <form action="" method="post" th:object="${petUpdateForm}" enctype="multipart/form-data" >
         <input type="hidden" th:field="*{petNum}">
         <!--            th:action="@{mypage/petreg}"-->
         <div class="myprofile-top">반려동물 등록</div>
@@ -116,6 +116,7 @@
                       </th:block>
                     </div>
                     <label class="file-label" for="chooseFile">사진업로드</label>
+                    <!-- 이미지 파일 업로드 부분 -->
                     <input
                         class="file"
                         id="chooseFile"
@@ -123,7 +124,8 @@
                         onchange="dropFile.handleFiles(this.files)"
                         accept="image/png, image/jpeg, image/gif"
                         th:field="*{imageFiles}"/>
-                    <!-- petImg   -->
+                    <!-- 기존 이미지 파일 삭제 로직 추가 -->
+                    <input type="hidden" name="deleteImage" th:value="${deleteImage}" />
                   </div>
                 </div>
               </div>

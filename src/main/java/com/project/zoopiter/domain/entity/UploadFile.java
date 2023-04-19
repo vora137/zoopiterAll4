@@ -21,4 +21,8 @@ public class UploadFile {
   private String contentType;
   private byte[] fileData;
   private AttachFileType attachFileType;
+
+  public byte[] getBytes() {
+    return fileData;
+  }
 }
